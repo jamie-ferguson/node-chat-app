@@ -265,7 +265,7 @@
         if($('#chatModal').is(':visible')){
             if(data.channel_id == getCurrentChannelID()){
                 feedback.innerHTML = '';
-                if (data.user_name == "{{ auth()->user()->name }}") {
+                if (data.user_name == userName) {
                     activeMessage = 'active-message';
                 } else {
                     activeMessage = '';
