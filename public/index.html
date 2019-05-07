@@ -1,0 +1,361 @@
+<script src="js/jquery-3.1.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/emojione/2.2.7/assets/css/emojione.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/emojione/2.2.7/lib/js/emojione.min.js"></script>
+
+<script type="text/javascript" src="js/emojionearea.min.js"></script>
+<link rel="stylesheet" href="css/emojionearea.min.css">
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+
+<link rel="stylesheet" href="css/styles.css">
+
+
+
+<!-- Instant Messaging Modal -->
+<div class="" id="chatModal" tabindex="-1" role="dialog" aria-labelledby="chatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-full" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="chatModalLabel">Instant Messaging</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true"><i class="fas fa-times"></i></span>
+                </button>
+            </div>
+            <div class="modal-body IMModalBody">
+                <div class="row" id="channel-windows">
+                    <div class="col-md-3 mx-auto">
+                        <h4>Rooms</h4>
+                        <div id="room-window">
+                            <ul class="list-unstyled room-channels pt-2">
+                                <!-- Channels will be populated here on page load -->
+                            </ul>
+                        </div>
+
+                        <h4>Users</h4>
+
+                        <div class="row">
+                            <div class="col-12 my-auto">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" id="inlineFormInputGroup" placeholder="Search users...">
+                                    <div class="input-group-append">
+                                        <div class="input-group-text"><i class="fas fa-search"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="user-window">
+                            <ul class="list-unstyled room-channels pt-2">
+                                <!-- Users will be populated here on page load -->
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-9 mx-auto">
+                        <div id="chat-window">
+                            <div id="output">
+                                <!-- Messages will be populated here on page load -->
+                            </div>
+                            <div id="feedback"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="text" id="message" class="form-control" placeholder="Type your message & hit return to send...">
+                <!-- <button type="button" class="btn btn-info" id="send-msg-btn"><i class="fas fa-envelope mr-1"></i>Send</button> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Make connection
+    // var serverAddress = "https://lawthorn.com:4000";
+    var serverAddress = "http://localhost:4440";
+    var socket = io.connect(serverAddress);
+
+
+    // Query DOM
+    var chatWindow = document.getElementById("chat-window");
+    var message = document.getElementById('message');
+    var output = document.getElementById('output');
+    var feedback = document.getElementById('feedback');
+    var userID = 62;
+    var userName = "Jamie Ferguson";
+
+    // Helper function to get the current active channel
+    function getCurrentChannelID(){
+        var channelID = '';
+        $('.IMChannel').each(function(){
+            if ($(this).hasClass('IMChannelActive')) {
+                channelID = $(this).data('channel-id');
+            }
+        });
+        return channelID;
+    }
+
+    // Helper function to convert emoji text from text format to images
+    function convertIt(convertIt) {
+        var output = emojione.shortnameToUnicode(convertIt);
+        return output;
+    }
+
+
+
+    $(document).ready(function() {
+
+        $.ajax({
+            type: "GET",
+            url: serverAddress + "/users",
+            beforeSend: function() {
+
+            },
+            complete: function() {
+
+            },
+            success: function(users) {
+                newHTML = "";
+                users.forEach(function(user, index){
+                    dataChannelID = user.ID > userID ? userID+'-'+user.ID : user.ID+'-'+userID;
+                    you = user.ID == userID ? ' (you)' : '';
+                    newHTML += '<li class="my-1 IMChannel bg-dark text-white" data-channel-id="' + dataChannelID + '">' + user.name + you + '</li>';
+                });
+                $('#user-window .room-channels').append(newHTML);
+            }
+        });
+
+        $.ajax({
+            type: "GET",
+            url: serverAddress + "/channels",
+            beforeSend: function() {
+
+            },
+            complete: function() {
+
+            },
+            success: function(channels) {
+                newHTML = "";
+                channels.forEach(function(channel, index){
+                    active = channel.name == 'general' ? 'IMChannelActive' : '';
+                    newHTML += '<li class="my-1 IMChannel bg-dark text-white ' + active + '" data-channel-id="' + channel.ID + '">' + channel.name + '</li>';
+                });
+                $('#room-window .room-channels').append(newHTML);
+            }
+        });
+
+        $.ajax({
+            type: "POST",
+            url: serverAddress + "/messages",
+            dataType: "json",
+            data: {channel_id: "1"},
+            beforeSend: function() {
+
+            },
+            complete: function() {
+
+            },
+            success: function(messages) {
+                newHTML = "";
+                messages.forEach(function(message, index){
+                    activeMessage = message.user_name == userName ? 'active-message' : '';
+                    textWhite = message.user_name == userName ? 'text-white' : '';
+                    newHTML += '<div class="IMComment ' + activeMessage + '">';
+                    newHTML += '<div class="IMCommentName">' + message.user_name + '</div>';
+                    newHTML += '<div class="IMCommentTime ' + textWhite + '">' + message.time + '</div>';
+                    newHTML += '<div class="IMCommentMessage">' + convertIt(message.message) + '</div>';
+                    newHTML += '</div>';
+                });
+                $('#chat-window #output').append(newHTML);
+
+                // Scroll to bottom of chat window
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        });
+
+        // user filter
+        $("#inlineFormInputGroup").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#user-window li").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+
+        $("#message").emojioneArea({
+            shortnames: true,
+            saveEmojisAs:'shortname',
+            autocomplete: false,
+            events: {
+                keyup: function (editor, event) {
+                    var channelID = getCurrentChannelID();
+                    if (event.which == 13) {
+                        this.source.val(this.getText());
+                        socket.emit('chat', {
+                            message: message.value,
+                            channel_id: channelID,
+                            user_id: userID,
+                            user_name: userName
+                        });
+                        message.value = '';
+                        this.source.val(this.setText(''));
+                        var wtf    = $('#output');
+                        var height = wtf[0].scrollHeight;
+                        wtf.scrollTop(height);
+                        event.preventDefault();
+                    }
+
+                }
+            }
+        });
+
+    });
+
+
+
+    // Emit keypress (typing) and message send (chat) events
+    message.addEventListener("keypress", function(){
+        var channelID = getCurrentChannelID();
+        if (event.keyCode == 13 || event.which == 13) {
+            socket.emit('chat', {
+                message: message.value,
+                channel_id: channelID,
+                user_id: userID,
+                user_name: userName
+            });
+            message.value = '';
+        }else{
+            socket.emit("typing", {
+                channel_id: channelID,
+                user_id: userID,
+                user_name: userName
+            });
+        }
+    });
+
+
+    // Emit message using send button - this is currently not being used
+    // instead relying on user pressing return to send message
+    $('#send-msg-btn').on('click', function(){
+        var channelID = getCurrentChannelID();
+        $('#message').val($('.emojionearea-editor').html());
+        socket.emit('chat', {
+            message: message.value,
+            channel_id: channelID,
+            user_id: userID,
+            user_name: userName
+        });
+        $('#message').val('');
+        $('.emojionearea-editor').html('');
+    })
+
+
+
+    // Listen for incoming chat events
+    socket.on('chat', function(data){
+
+        if($('#chatModal').is(':visible')){
+            if(data.channel_id == getCurrentChannelID()){
+                feedback.innerHTML = '';
+                if (data.user_name == "{{ auth()->user()->name }}") {
+                    activeMessage = 'active-message';
+                } else {
+                    activeMessage = '';
+                }
+                output.innerHTML += '<div class="IMComment ' + activeMessage + '"><div class="IMCommentName">' + data.user_name + '</div><div class="IMCommentTime">' + data.time + '</div><div class="IMCommentMessage">' + convertIt(data.message) + '</div></div>';
+            }else{
+                //add badge to channel name indicating a new message
+                $('.IMChannel').each(function(){
+                    if (data.channel_id == $(this).data('channel-id')) {
+                        $(this).addClass('IMChannelNewMessage');
+                        $(this).prependTo($(this).parent());
+                    }
+                });
+            }
+        }else{
+            //add badge to channel name indicating a new message
+            $('.IMChannel').each(function(){
+                if (data.channel_id == $(this).data('channel-id')) {
+                    $(this).addClass('IMChannelNewMessage');
+                    $(this).prependTo($(this).parent());
+                }
+            });
+            // add badge to nav icon
+            $('.IMCommentsIcon').addClass('IMNewMessage');
+        }
+    });
+
+
+    // Listen for incoming typing events
+    socket.on('typing', function(data){
+        if(data.channel_id == getCurrentChannelID()){
+            feedback.innerHTML = '<p><em>' + data.user_name + ' is typing a message...</em></p>';
+            setTimeout(function(){
+                feedback.innerHTML = '';
+            }, 4000);
+        }
+    });
+
+
+
+    // Select new channel
+    $('#channel-windows').on("click", ".IMChannel", function(){
+        if (!$(this).hasClass('IMChannelActive')) {
+
+            // remove active highlight from currently active channel
+            $('.IMChannel').each(function(){
+                if ($(this).hasClass('IMChannelActive')) {
+                    $(this).removeClass('IMChannelActive');
+                }
+            });
+
+            // remove new message highlight if it exists
+            if ($(this).hasClass('IMChannelNewMessage')) {
+                $(this).removeClass('IMChannelNewMessage');
+            }
+
+            // and remove the new message badge on the icon if there are no new messages on any channel
+            // $('.IMCommentsIcon').removeClass('IMNewMessage');
+
+            // make his new channel the active one
+            $(this).addClass('IMChannelActive');
+
+            // clear the output and message areas
+            output.innerHTML = '';
+            message.value = '';
+
+            // get the last 40 messages for this channel
+            // and display in output area
+            var channelID = $(this).data('channel-id');
+
+            $.ajax({
+                type: "POST",
+                url: serverAddress + "/messages",
+                dataType: "json",
+                data: {channel_id: channelID},
+                success: function(messages) {
+                    newHTML = "";
+                    messages.forEach(function(message, index){
+                        activeMessage = message.user_name == userName ? 'active-message' : '';
+                        textWhite = message.user_name == userName ? 'text-white' : '';
+                        newHTML += '<div class="IMComment ' + activeMessage + '">';
+                        newHTML += '<div class="IMCommentName">' + message.user_name + '</div>';
+                        newHTML += '<div class="IMCommentTime ' + textWhite + '">' + message.time + '</div>';
+                        newHTML += '<div class="IMCommentMessage">' + convertIt(message.message) + '</div>';
+                        newHTML += '</div>';
+                    });
+                    $('#chat-window #output').append(newHTML);
+
+                    // Scroll to bottom of chat window
+                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                }
+
+            });
+        }
+    });
+
+
+</script>
