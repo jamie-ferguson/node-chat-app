@@ -99,6 +99,38 @@
         return channelID;
     }
 
+    // Helper function to update the message output window
+    function updateMessageWindow(channel_id){
+        $.ajax({
+            type: "POST",
+            url: serverAddress + "/messages",
+            dataType: "json",
+            data: {channel_id: channel_id},
+            beforeSend: function() {
+
+            },
+            complete: function() {
+
+            },
+            success: function(messages) {
+                newHTML = "";
+                messages.forEach(function(message, index){
+                    activeMessage = message.user_name == userName ? 'active-message' : '';
+                    textWhite = message.user_name == userName ? 'text-white' : '';
+                    newHTML += '<div class="IMComment ' + activeMessage + '">';
+                    newHTML += '<div class="IMCommentName">' + message.user_name + '</div>';
+                    newHTML += '<div class="IMCommentTime ' + textWhite + '">' + message.time + '</div>';
+                    newHTML += '<div class="IMCommentMessage">' + convertIt(message.message) + '</div>';
+                    newHTML += '</div>';
+                });
+                $('#chat-window #output').append(newHTML);
+
+                // Scroll to bottom of chat window
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        });
+    }
+
     // Helper function to convert emoji text from text format to images
     function convertIt(convertIt) {
         var output = emojione.shortnameToUnicode(convertIt);
@@ -148,34 +180,7 @@
             }
         });
 
-        $.ajax({
-            type: "POST",
-            url: serverAddress + "/messages",
-            dataType: "json",
-            data: {channel_id: "1"},
-            beforeSend: function() {
-
-            },
-            complete: function() {
-
-            },
-            success: function(messages) {
-                newHTML = "";
-                messages.forEach(function(message, index){
-                    activeMessage = message.user_name == userName ? 'active-message' : '';
-                    textWhite = message.user_name == userName ? 'text-white' : '';
-                    newHTML += '<div class="IMComment ' + activeMessage + '">';
-                    newHTML += '<div class="IMCommentName">' + message.user_name + '</div>';
-                    newHTML += '<div class="IMCommentTime ' + textWhite + '">' + message.time + '</div>';
-                    newHTML += '<div class="IMCommentMessage">' + convertIt(message.message) + '</div>';
-                    newHTML += '</div>';
-                });
-                $('#chat-window #output').append(newHTML);
-
-                // Scroll to bottom of chat window
-                chatWindow.scrollTop = chatWindow.scrollHeight;
-            }
-        });
+        updateMessageWindow('1');
 
         // user filter
         $("#inlineFormInputGroup").on("keyup", function() {
@@ -331,29 +336,7 @@
             // and display in output area
             var channelID = $(this).data('channel-id');
 
-            $.ajax({
-                type: "POST",
-                url: serverAddress + "/messages",
-                dataType: "json",
-                data: {channel_id: channelID},
-                success: function(messages) {
-                    newHTML = "";
-                    messages.forEach(function(message, index){
-                        activeMessage = message.user_name == userName ? 'active-message' : '';
-                        textWhite = message.user_name == userName ? 'text-white' : '';
-                        newHTML += '<div class="IMComment ' + activeMessage + '">';
-                        newHTML += '<div class="IMCommentName">' + message.user_name + '</div>';
-                        newHTML += '<div class="IMCommentTime ' + textWhite + '">' + message.time + '</div>';
-                        newHTML += '<div class="IMCommentMessage">' + convertIt(message.message) + '</div>';
-                        newHTML += '</div>';
-                    });
-                    $('#chat-window #output').append(newHTML);
-
-                    // Scroll to bottom of chat window
-                    chatWindow.scrollTop = chatWindow.scrollHeight;
-                }
-
-            });
+            updateMessageWindow(channelID);
         }
     });
 
