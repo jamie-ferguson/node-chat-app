@@ -265,12 +265,14 @@
         if($('#chatModal').is(':visible')){
             if(data.channel_id == getCurrentChannelID()){
                 feedback.innerHTML = '';
-                if (data.user_name == userName) {
-                    activeMessage = 'active-message';
-                } else {
-                    activeMessage = '';
-                }
-                output.innerHTML += '<div class="IMComment ' + activeMessage + '"><div class="IMCommentName">' + data.user_name + '</div><div class="IMCommentTime">' + data.time + '</div><div class="IMCommentMessage">' + convertIt(data.message) + '</div></div>';
+                activeMessage = data.user_name == userName ? 'active-message' : '';
+                textWhite = data.user_name == userName ? 'text-white' : '';
+                newHTML += '<div class="IMComment ' + activeMessage + '">';
+                newHTML += '<div class="IMCommentName">' + data.user_name + '</div>';
+                newHTML += '<div class="IMCommentTime ' + textWhite + '">' + data.time + '</div>';
+                newHTML += '<div class="IMCommentMessage">' + convertIt(data.message) + '</div>';
+                newHTML += '</div>';
+                output.innerHTML += newHTML;
             }else{
                 //add badge to channel name indicating a new message
                 $('.IMChannel').each(function(){
