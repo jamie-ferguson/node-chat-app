@@ -80,7 +80,7 @@ app.get('/channels', (req, res) => {
 app.post('/messages', (req, res) => {
     console.log("req,body.channel_id=" + req.body.channel_id);
     var channelID = req.body.channel_id;
-	var sqlSel = "SELECT im.id, im.user_id, im.channel_id, im.message, im.created_at, DATE_FORMAT(im.created_at, '%D %M %Y %H:%m') AS time, u.name AS user_name FROM instant_messages AS im JOIN users AS u WHERE im.user_id = u.id AND im.channel_id = '" + channelID + "' ORDER BY im.created_at ASC";
+	var sqlSel = "SELECT im.id, im.user_id, im.channel_id, im.message, im.created_at, DATE_FORMAT(im.created_at, '%D %M %Y %H:%m') AS time, u.name AS user_name FROM instant_messages AS im JOIN Users AS u WHERE im.user_id = u.id AND im.channel_id = '" + channelID + "' ORDER BY im.created_at ASC";
     con.query(sqlSel, function (err, result) {
         if (err) throw err;
         res.status(200).send(JSON.parse(JSON.stringify(result)));
