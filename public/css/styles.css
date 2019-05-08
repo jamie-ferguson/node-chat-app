@@ -31,18 +31,17 @@
 }
 
 #room-window{
-    height: 7vh;
     margin-top: -8px;
     margin-bottom: 24px;
 }
 
 #user-window{
-    height: 60vh;
+    height: 20rem;
     overflow: auto;
 }
 
 #chat-window{
-    height: 93.2vh;
+    height: 31.2rem;
     overflow-x: scroll;
     background: #eee;
 }

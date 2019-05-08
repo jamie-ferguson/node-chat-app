@@ -264,7 +264,7 @@
 
         if($('#chatModal').is(':visible')){
             if(data.channel_id == getCurrentChannelID()){
-                feedback.innerHTML = '';
+                output.innerHTML = '';
                 activeMessage = data.user_name == userName ? 'active-message' : '';
                 textWhite = data.user_name == userName ? 'text-white' : '';
                 newHTML += '<div class="IMComment ' + activeMessage + '">';
